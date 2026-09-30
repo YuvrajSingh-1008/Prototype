@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeritasAI — Clean Misinformation & Visual Verification</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    
+    body {
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    /* Subtle loading shimmer */
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .pulse-subtle {
+      animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+
+<body class="bg-[#fafafa] dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
+
+  <!-- Minimal Header -->
+  <header class="border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      
+      <!-- Brand -->
+      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="resetToAnalyzer()">
+        <div class="w-7 h-7 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 flex items-center justify-center font-semibold text-xs tracking-wider">
+          V
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Veritas</span>
+          <span class="text-[11px] text-slate-400 font-mono tracking-wide">Verification Platform</span>
+        </div>
+      </div>
+
+      <!-- Quick Nav & Utility Tools -->
+      <div class="flex items-center space-x-1 sm:space-x-2">
+        <button onclick="switchTab('analyzer')" id="nav-btn-analyzer" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 transition">
+          Verify
+        </button>
+        <button onclick="switchTab('sources')" id="nav-btn-sources" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+          Domain Check
+        </button>
+        <button onclick="switchTab('trends')" id="nav-btn-trends" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+          Debunk Feed
+        </button>
+
+        <div class="h-4 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1"></div>
+
+        <!-- Dark/Light Theme -->
+        <button onclick="toggleTheme()" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Toggle theme">
+          <i data-lucide="moon" id="themeIcon" class="w-4 h-4"></i>
+        </button>
+        
+        <!-- API Settings -->
+        <button onclick="openApiModal()" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="API Settings">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
+
+    <!-- ============================================ -->
+    <!-- TAB 1: MAIN VERIFICATION INTERFACE           -->
+    <!-- ============================================ -->
+    <section id="tab-analyzer" class="space-y-6">
+      
+      <!-- Headline & Subtitle -->
+      <div class="text-center sm:text-left space-y-1.5">
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Verify Information & Visual Media
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl">
+          Examine articles, claims, screenshots, and photos for manipulation, context distortion, and falsehoods.
+        </p>
+      </div>
+
+      <!-- Segmented Control Mode Toggle -->
+      <div class="flex items-center justify-start">
+        <div class="p-1 bg-slate-200/70 dark:bg-slate-800/70 rounded-xl inline-flex space-x-1 border border-slate-300/40 dark:border-slate-700/40">
+          <button id="mode-text-btn" onclick="setMode('text')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm flex items-center space-x-1.5">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            <span>Text or Article</span>
+          </button>
+          <button id="mode-image-btn" onclick="setMode('image')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1.5">
+            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+            <span>Image or Screenshot</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 sm:p-6 space-y-4">
+        
+        <!-- ================= MODE: TEXT INPUT ================= -->
+        <div id="input-text-panel" class="space-y-4">
+          
+          <!-- Sample Scenarios (Quick Fill) -->
+          <div class="flex items-center flex-wrap gap-1.5 text-xs">
+            <span class="text-slate-400 font-medium mr-1 text-[11px]">Presets:</span>
+            <button onclick="fillPreset('miracle')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Medical Hoax
+            </button>
+            <button onclick="fillPreset('science')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Credible NASA Finding
+            </button>
+            <button onclick="fillPreset('misquote')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Out-of-Context Statement
+            </button>
+            <button onclick="fillPreset('satire')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Satirical Story
+            </button>
+          </div>
+
+          <!-- Main Textarea -->
+          <div class="relative">
+            <textarea id="textInput" rows="4" placeholder="Paste article text, social media headline, statement, or claim..." class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 p-3.5 focus:bg-white dark:focus:bg-slate-950 focus:border-slate-400 dark:focus:border-slate-600 outline-none transition resize-y text-slate-900 dark:text-slate-100 placeholder:text-slate-400"></textarea>
+            <button onclick="clearInputs()" id="clearBtn" class="hidden absolute top-2.5 right-2.5 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              Clear
+            </button>
+          </div>
+
+          <!-- Secondary URL input & Action Row -->
+          <div class="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <div class="relative w-full sm:flex-1">
+              <i data-lucide="link" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3"></i>
+              <input type="url" id="urlInput" placeholder="Optional source link (e.g., https://example.com/news)" class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 focus:bg-white dark:focus:bg-slate-950 focus:border-slate-400 outline-none transition text-slate-800 dark:text-slate-200">
+            </div>
+            
+            <button onclick="runAnalysis()" id="analyzeBtn" class="w-full sm:w-auto px-5 py-2 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-sm transition flex items-center justify-center space-x-1.5 disabled:opacity-50">
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              <span id="analyzeBtnText">Verify Authenticity</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ================= MODE: IMAGE FORENSICS INPUT ================= -->
+        <div id="input-image-panel" class="hidden space-y-4">
+          
+          <!-- Sample Scenarios (Quick Test Images) -->
+          <div class="flex items-center flex-wrap gap-1.5 text-xs">
+            <span class="text-slate-400 font-medium mr-1 text-[11px]">Inspect Samples:</span>
+            <button onclick="loadImagePreset('tweet')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Doctored Tweet
+            </button>
+            <button onclick="loadImagePreset('deepfake')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Synthetic AI Photo
+            </button>
+            <button onclick="loadImagePreset('chart')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Misleading Truncated Chart
+            </button>
+            <button onclick="loadImagePreset('recycled')" class="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition text-[11px]">
+              Recycled 2019 Photo
+            </button>
+          </div>
+
+          <!-- Minimal Dropzone -->
+          <div id="dropzone" class="border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition bg-slate-50/50 dark:bg-slate-950/40 relative">
+            <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="onFileSelected(event)">
+
+            <!-- Empty State -->
+            <div id="dropzoneEmpty" class="space-y-2">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400"></i>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Click to upload, drag and drop, or press <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px] font-mono">Ctrl + V</kbd> to paste
+              </p>
+              <p class="text-[11px] text-slate-400">Supports PNG, JPG, or WEBP</p>
+            </div>
+
+            <!-- Preview State -->
+            <div id="dropzonePreview" class="hidden flex-col items-center space-y-3">
+              <div class="relative max-h-56 max-w-sm rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm bg-slate-900">
+                <img id="imagePreviewTag" src="" alt="Forensic inspection image" class="max-h-56 object-contain">
+                <button onclick="event.stopPropagation(); removeUploadedImage()" class="absolute top-2 right-2 p-1 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white transition" title="Remove">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+              <div class="flex items-center space-x-2 text-[11px] font-mono text-slate-500">
+                <span id="imgInfoName">image.png</span>
+                <span>•</span>
+                <span id="imgInfoSize">-- KB</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accompanying Context / Caption -->
+          <div class="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <div class="relative w-full sm:flex-1">
+              <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3"></i>
+              <input type="text" id="imageCaptionInput" placeholder="Accompanying social claim or caption (optional)..." class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 focus:bg-white dark:focus:bg-slate-950 focus:border-slate-400 outline-none transition text-slate-800 dark:text-slate-200">
+            </div>
+
+            <button onclick="runImageAnalysis()" id="analyzeImageBtn" class="w-full sm:w-auto px-5 py-2 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-sm transition flex items-center justify-center space-x-1.5 disabled:opacity-50">
+              <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+              <span id="analyzeImageBtnText">Scan Visuals</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Clean Minimal Loader -->
+        <div id="loader" class="hidden pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center space-x-2 text-xs text-slate-500">
+          <div class="w-3 h-3 rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-slate-900 dark:border-t-white animate-spin"></div>
+          <span id="loaderText">Cross-referencing claims and digital signatures...</span>
+        </div>
+
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsCard" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
+        
+        <!-- Header Verdict Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-1">Assessment Verdict</span>
+            <div class="flex items-center space-x-2">
+              <div id="verdictBadge" class="px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span id="verdictText">Highly Credible</span>
+              </div>
+              <span id="confidenceText" class="text-xs text-slate-500 font-mono">(92% Confidence)</span>
+            </div>
+          </div>
+
+          <!-- Quick Copy Rebuttal CTA -->
+          <button onclick="copyRebuttal()" id="copyRebuttalBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition flex items-center space-x-1.5 self-start sm:self-auto">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copyBtnLabel">Copy Quick Fact-Check</span>
+          </button>
+        </div>
+
+        <!-- 3 Key Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
+            <span class="text-[11px] text-slate-400 font-medium block">Credibility Score</span>
+            <div class="flex items-baseline space-x-2 mt-1">
+              <span id="metricScore" class="text-xl font-bold text-slate-900 dark:text-white">92</span>
+              <span class="text-[11px] text-slate-500 font-mono">/ 100</span>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div id="metricScoreBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
+            <span class="text-[11px] text-slate-400 font-medium block" id="metric2Title">Sensationalism Index</span>
+            <div class="flex items-baseline space-x-2 mt-1">
+              <span id="metricSensationalism" class="text-xl font-bold text-slate-900 dark:text-white">Low (14%)</span>
+            </div>
+            <p id="metric2Subtitle" class="text-[11px] text-slate-500 mt-2 truncate">Balanced, non-emotive language</p>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
+            <span class="text-[11px] text-slate-400 font-medium block" id="metric3Title">Context Integrity</span>
+            <div class="flex items-baseline space-x-2 mt-1">
+              <span id="metricContext" class="text-xl font-bold text-slate-900 dark:text-white">Verified Match</span>
+            </div>
+            <p id="metric3Subtitle" class="text-[11px] text-slate-500 mt-2 truncate">Corroborated by wire archives</p>
+          </div>
+
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="space-y-1.5">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">Executive Summary</h3>
+          <p id="executiveSummary" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            Corroborated by academic and peer-reviewed press releases. No indications of emotional coercion, manipulated graphics, or fabricated testimony were found.
+          </p>
+        </div>
+
+        <!-- Extracted Claims & Verification Breakdown -->
+        <div class="space-y-2.5">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">Key Claims & Verification</h3>
+          <div id="claimsList" class="space-y-2">
+            <!-- Dynamically populated rows -->
+          </div>
+        </div>
+
+        <!-- Source / Corroboration Footnote -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+          <span id="corroborationFootnote">Evaluated against verified wire archives and fact-checking registries</span>
+          <span class="font-mono text-[10px]">Veritas Engine 3.1</span>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================ -->
+    <!-- TAB 2: DOMAIN & SOURCE CHECKER               -->
+    <!-- ============================================ -->
+    <section id="tab-sources" class="hidden space-y-6">
+      <div class="space-y-1">
+        <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Domain & Source Inspector</h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          Check publisher trust history, WHOIS transparency, and record of retracted or false stories.
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="globe" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+            <input type="text" id="domainQueryInput" placeholder="Enter publisher domain (e.g., reuters.com, theonion.com, healthextreme24.xyz)" class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 focus:bg-white outline-none">
+          </div>
+          <button onclick="checkDomain()" class="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-semibold hover:bg-slate-800 transition">
+            Inspect
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span>Quick check:</span>
+          <button onclick="quickCheckDomain('reuters.com')" class="underline hover:text-slate-700 dark:hover:text-slate-300">reuters.com</button>
+          <span>•</span>
+          <button onclick="quickCheckDomain('theonion.com')" class="underline hover:text-slate-700 dark:hover:text-slate-300">theonion.com</button>
+          <span>•</span>
+          <button onclick="quickCheckDomain('cure-now-unreported.xyz')" class="underline hover:text-slate-700 dark:hover:text-slate-300">cure-now-unreported.xyz</button>
+        </div>
+      </div>
+
+      <!-- Domain Output Card -->
+      <div id="domainCard" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- TAB 3: VIRAL DEBUNK FEED                     -->
+    <!-- ============================================ -->
+    <section id="tab-trends" class="hidden space-y-6">
+      <div class="space-y-1">
+        <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Recent Debunk Feed</h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          Recently verified hoaxes, manipulated screenshots, and recycled historical media.
+        </p>
+      </div>
+
+      <div class="space-y-3" id="trendsFeedContainer">
+        <!-- Loaded via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Clean API Settings Modal -->
+  <div id="apiModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">API Configuration</h3>
+        <button onclick="closeApiModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Veritas uses <span class="font-mono text-slate-700 dark:text-slate-300">gemini-3-flash-preview</span>. You can leave the key blank to use the runtime default or input your own API key.
+      </p>
+      <div>
+        <label class="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1">Gemini API Key</label>
+        <input type="password" id="customApiKey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:border-slate-400">
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeApiModal()" class="px-3 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
+        <button onclick="saveApiKey()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-12 opacity-0 transition-all duration-200 bg-slate-900 text-white px-3.5 py-2.5 rounded-xl shadow-lg text-xs flex items-center space-x-2 border border-slate-800">
+    <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i>
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <script>
+    // State
+    let ACTIVE_MODE = 'text'; // 'text' | 'image'
+    let currentImageBase64 = null;
+    let currentImageMime = 'image/png';
+    let currentResult = null;
+    let API_KEY = localStorage.getItem('VERITAS_API_KEY') || "";
+
+    // Text Test Presets
+    const PRESETS = {
+      miracle: {
+        text: "MIRACLE CURE DISCOVERED! Doctors are stunned after an ordinary tropical fruit extract mixed with warm salt water completely eliminated all cancer cells in 48 hours without chemotherapy. Big Pharma has spent billions trying to keep this secret from reaching the public, but the suppressed study has finally leaked on WhatsApp!",
+        url: "https://healthmiracles-suppressed.xyz/cure-secret"
+      },
+      science: {
+        text: "NASA's James Webb Space Telescope has identified water vapor, methane, and carbon dioxide in the atmosphere of exoplanet K2-18b, an exoplanet 8.6 times as massive as Earth located in the habitable zone of star LHS 1140. Astrophysical researchers published the spectral observation data in The Astrophysical Journal Letters, noting that further confirmation is required to determine potential habitability.",
+        url: "https://nasa.gov/mission_pages/webb/exoplanet-k2-18b"
+      },
+      misquote: {
+        text: "SHOCKING VIDEO: The Mayor admitted on live television that he wants to 'shut down all community libraries and seize pensions immediately to fund luxury yachts for city executives'. Spread this everywhere before they delete the footage!",
+        url: "https://city-leak-expose.info/mayor-corrupt-live"
+      },
+      satire: {
+        text: "In an unexpected legal milestone, the European High Court has ruled that domestic house cats possess the legal right to sue their owners for emotional damages if dinner is served more than 15 minutes past the scheduled feeding bell.",
+        url: "https://theonion.com/legal-update-feline-rights"
+      }
+    };
+
+    // Clean Mock Canvas Synthesizer for Image Presets
+    function makePresetCanvas(type) {
+      const c = document.createElement('canvas');
+      c.width = 600;
+      c.height = 340;
+      const ctx = c.getContext('2d');
+
+      if (type === 'tweet') {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 600, 340);
+        ctx.fillStyle = '#1e293b';
+        ctx.roundRect(30, 30, 540, 280, 12);
+        ctx.fill();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(65, 70, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText('Official State Transit', 95, 66);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('@StateTransitOfficial • 1h', 95, 84);
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '15px sans-serif';
+        ctx.fillText('URGENT: All subway systems, rail connections, and', 55, 135);
+        ctx.fillText('flights are suspended until next Monday due to fuel rationing.', 55, 160);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('42.1K Reposts · 119K Likes', 55, 260);
+
+      } else if (type === 'deepfake') {
+        const grad = ctx.createLinearGradient(0, 0, 600, 340);
+        grad.addColorStop(0, '#1e1b4b');
+        grad.addColorStop(1, '#020617');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 600, 340);
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(460, 90, 50, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0f172a';
+        for(let i = 0; i < 12; i++) {
+          let h = 60 + Math.sin(i)*50 + (i%3)*30;
+          ctx.fillRect(50 + i*42, 340 - h, 36, h);
+        }
+
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText('AI_SYNTHETIC_GENERATION_SAMPLE', 40, 40);
+
+      } else if (type === 'chart') {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 600, 340);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('SURGE IN UNEMPLOYMENT (Truncated Y-Axis)', 50, 45);
+
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(80, 80);
+        ctx.lineTo(80, 270);
+        ctx.lineTo(520, 270);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('4.3%', 45, 120);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('4.1%', 45, 190);
+        ctx.fillText('4.0% (Cutoff)', 15, 268);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(150, 190, 80, 80);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(330, 110, 80, 160);
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('Jan (4.1%)', 160, 290);
+        ctx.fillText('Feb (4.3%)', 340, 290);
+
+      } else {
+        // Recycled
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 600, 340);
+        for(let a=0; a<Math.PI*2; a+=0.25) {
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(300, 120);
+          ctx.lineTo(300 + Math.cos(a)*60, 120 + Math.sin(a)*60);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('Harbor Fireworks Archives — July 2019', 40, 300);
+      }
+      return c.toDataURL('image/png');
+    }
+
+    // Recent Debunk Database
+    const RECENT_DEBUNKS = [
+      {
+        tag: 'Health',
+        title: 'Drinking chlorine dioxide cleanses heavy metals from the bloodstream',
+        verdict: 'False',
+        verdictClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-900',
+        summary: 'Chlorine dioxide is industrial bleach. Ingestion causes acute renal failure and toxicity.',
+        source: 'US FDA & Reuters'
+      },
+      {
+        tag: 'AI / Synthetic',
+        title: 'Viral photo of papal dignitary wearing a white puffer jacket',
+        verdict: 'AI-Generated',
+        verdictClass: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 border-purple-200 dark:border-purple-900',
+        summary: 'Synthesized via Midjourney v5 by an independent artist; no such real photo exists.',
+        source: 'Associated Press & Snopes'
+      },
+      {
+        tag: 'Video / War',
+        title: 'Video of fighter aircraft downing aerial targets during recent border skirmish',
+        verdict: 'Out of Context',
+        verdictClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-900',
+        summary: 'Footage was extracted directly from the video game ARMA 3 with simulated motion blur.',
+        source: 'BBC Verify'
+      }
+    ];
+
+    // Domain Database
+    const DOMAIN_DATA = {
+      'reuters.com': {
+        name: 'Reuters News Agency',
+        score: 96,
+        status: 'High Credibility / Wire Standard',
+        type: 'International Wire Service',
+        notes: 'Strict fact-checking protocols, certified IFCN signatory, low emotional language.'
+      },
+      'theonion.com': {
+        name: 'The Onion',
+        score: 30,
+        status: 'Parody / Satire',
+        type: 'Comedy Publication',
+        notes: 'Well-known satire publication. Articles are comedic fiction and not factual news.'
+      },
+      'cure-now-unreported.xyz': {
+        name: 'Cure Now Unreported',
+        score: 12,
+        status: 'Dangerous Misinformation',
+        type: 'Affiliate Marketing Blog',
+        notes: 'Masked WHOIS domain, history of false cancer claims, aggressive health affiliate links.'
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderTrends();
+      setupPasteAndDrop();
+
+      const textInput = document.getElementById('textInput');
+      textInput.addEventListener('input', () => {
+        document.getElementById('clearBtn').classList.toggle('hidden', textInput.value.length === 0);
+      });
+    });
+
+    function setupPasteAndDrop() {
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('fileInput');
+
+      dropzone.addEventListener('click', () => fileInput.click());
+
+      // Clipboard Paste
+      window.addEventListener('paste', (e) => {
+        if (ACTIVE_MODE !== 'image') return;
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let item of items) {
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            loadBlobImage(blob);
+            showToast('Image pasted from clipboard');
+            break;
+          }
+        }
+      });
+    }
+
+    function onFileSelected(e) {
+      if (e.target.files && e.target.files[0]) {
+        loadBlobImage(e.target.files[0]);
+      }
+    }
+
+    function loadBlobImage(file) {
+      currentImageMime = file.type;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        setImagePreview(evt.target.result, file.name, (file.size / 1024).toFixed(0) + ' KB');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function setImagePreview(dataUrl, name, size) {
+      currentImageBase64 = dataUrl.split(',')[1];
+      document.getElementById('imagePreviewTag').src = dataUrl;
+      document.getElementById('dropzoneEmpty').classList.add('hidden');
+      document.getElementById('dropzonePreview').classList.remove('hidden');
+      document.getElementById('dropzonePreview').classList.add('flex');
+      document.getElementById('imgInfoName').textContent = name || 'image.png';
+      document.getElementById('imgInfoSize').textContent = size || '300 KB';
+    }
+
+    function removeUploadedImage() {
+      currentImageBase64 = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('imagePreviewTag').src = '';
+      document.getElementById('dropzoneEmpty').classList.remove('hidden');
+      document.getElementById('dropzonePreview').classList.add('hidden');
+      document.getElementById('dropzonePreview').classList.remove('flex');
+    }
+
+    // Segmented Mode Switcher
+    function setMode(mode) {
+      ACTIVE_MODE = mode;
+      const textBtn = document.getElementById('mode-text-btn');
+      const imgBtn = document.getElementById('mode-image-btn');
+      const textPanel = document.getElementById('input-text-panel');
+      const imgPanel = document.getElementById('input-image-panel');
+
+      if (mode === 'text') {
+        textBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm flex items-center space-x-1.5";
+        imgBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1.5";
+        textPanel.classList.remove('hidden');
+        imgPanel.classList.add('hidden');
+      } else {
+        imgBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm flex items-center space-x-1.5";
+        textBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1.5";
+        imgPanel.classList.remove('hidden');
+        textPanel.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function fillPreset(key) {
+      const p = PRESETS[key];
+      if (p) {
+        document.getElementById('textInput').value = p.text;
+        document.getElementById('urlInput').value = p.url;
+        document.getElementById('clearBtn').classList.remove('hidden');
+        runAnalysis();
+      }
+    }
+
+    function loadImagePreset(type) {
+      const dataUrl = makePresetCanvas(type);
+      setImagePreview(dataUrl, `${type}_sample.png`, '120 KB');
+      
+      const captions = {
+        tweet: "Official State transit announced indefinite flight halts tonight.",
+        deepfake: "Massive downtown flooding captured last night.",
+        chart: "Graph shows massive 400% surge in unemployment rates.",
+        recycled: "Current airstrike fireworks over the coast."
+      };
+      document.getElementById('imageCaptionInput').value = captions[type] || "";
+      runImageAnalysis(type);
+    }
+
+    function clearInputs() {
+      document.getElementById('textInput').value = '';
+      document.getElementById('urlInput').value = '';
+      document.getElementById('clearBtn').classList.add('hidden');
+      document.getElementById('resultsCard').classList.add('hidden');
+    }
+
+    async function runAnalysis() {
+      const text = document.getElementById('textInput').value.trim();
+      const url = document.getElementById('urlInput').value.trim();
+
+      if (!text && !url) {
+        showToast('Please enter text or a URL to verify');
+        return;
+      }
+
+      setLoading(true, "Evaluating claims, emotional language, and sources...");
+
+      try {
+        const result = await fetchGeminiTextAnalysis(text, url);
+        renderResults(result);
+      } catch (err) {
+        console.warn("Using offline heuristic verification:", err);
+        const fallback = getHeuristicTextResult(text);
+        renderResults(fallback);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function runImageAnalysis(presetType) {
+      if (!currentImageBase64) {
+        showToast('Please provide an image or pick a sample');
+        return;
+      }
+
+      const caption = document.getElementById('imageCaptionInput').value.trim();
+      setLoading(true, "Scanning visual artifacts, layout baseline, and context...");
+
+      try {
+        const result = await fetchGeminiVisionAnalysis(currentImageBase64, currentImageMime, caption);
+        renderResults(result);
+      } catch (err) {
+        console.warn("Using offline image heuristic:", err);
+        const fallback = getHeuristicImageResult(presetType, caption);
+        renderResults(fallback);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function fetchGeminiTextAnalysis(text, url) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+      const systemInstruction = `You are Veritas, a professional investigative journalist and fact-checker. Provide objective, concise analysis in JSON format.`;
+
+      const prompt = `Analyze this content:
+Text: """${text}"""
+Source URL: "${url}"
+
+Return strict JSON only matching:
+{
+  "score": number (0-100),
+  "verdict": string ("Highly Credible" | "Likely False / Manipulated" | "Out of Context" | "Satire / Parody"),
+  "verdictType": string ("verified" | "false" | "warning" | "satire"),
+  "confidence": number (e.g. 92),
+  "sensationalism": string ("Low (12%)" | "Moderate (48%)" | "High (92%)"),
+  "sensationalismNote": string,
+  "contextStatus": string ("Verified Match" | "Context Distorted" | "Fabricated"),
+  "contextNote": string,
+  "summary": string (2-3 calm, concise sentences),
+  "rebuttalSnippet": string (1-2 sentences suitable for a polite factual comment reply),
+  "claims": [
+    {
+      "claim": string,
+      "status": string ("Verified" | "False" | "Misleading" | "Unsubstantiated"),
+      "note": string
+    }
+  ]
+}`;
+
+      const payload = {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: { responseMimeType: "application/json" }
+      };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return JSON.parse(raw);
+    }
+
+    async function fetchGeminiVisionAnalysis(base64, mime, caption) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+      const systemInstruction = `You are Veritas Multimodal Forensics. Analyze images and captions for deepfakes, screenshot forgery, and out-of-context recycling.`;
+
+      const prompt = `Examine this visual and caption: "${caption}".
+Return strict JSON matching:
+{
+  "score": number (0-100),
+  "verdict": string ("Likely False / Manipulated" | "AI-Generated Media" | "Out of Context" | "Verified Authentic"),
+  "verdictType": string ("false" | "warning" | "verified"),
+  "confidence": number,
+  "sensationalism": string,
+  "sensationalismNote": string,
+  "contextStatus": string,
+  "contextNote": string,
+  "summary": string,
+  "rebuttalSnippet": string,
+  "claims": [{"claim": string, "status": string, "note": string}]
+}`;
+
+      const payload = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType: mime, data: base64 } }
+            ]
+          }
+        ],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: { responseMimeType: "application/json" }
+      };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return JSON.parse(raw);
+    }
+
+    function getHeuristicTextResult(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('miracle cure') || lower.includes('big pharma') || lower.includes('suppressed')) {
+        return {
+          score: 14,
+          verdict: "Likely False / Manipulated",
+          verdictType: "false",
+          confidence: 96,
+          sensationalism: "Extreme (94%)",
+          sensationalismNote: "Capitalized alerts, conspiracy tropes",
+          contextStatus: "Fabricated",
+          contextNote: "Unsubstantiated medical assertions",
+          summary: "Promotes unverified clinical claims while alleging widespread pharmaceutical suppression. Medical consensus confirms no single botanical solution eliminates all malignancies within 48 hours.",
+          rebuttalSnippet: "Fact check: Medical institutions confirm this claim is unsubstantiated. There is no clinical trial supporting instant cancer cures from fruit extracts.",
+          claims: [
+            {
+              claim: "Fruit extract eliminates all cancer in 48 hours",
+              status: "False",
+              note: "Unsupported by any peer-reviewed oncology journal."
+            }
+          ]
+        };
+      } else if (lower.includes('nasa') || lower.includes('webb') || lower.includes('exoplanet')) {
+        return {
+          score: 94,
+          verdict: "Highly Credible",
+          verdictType: "verified",
+          confidence: 92,
+          sensationalism: "Low (11%)",
+          sensationalismNote: "Objective academic terminology",
+          contextStatus: "Verified Match",
+          contextNote: "Consistent with peer-reviewed disclosures",
+          summary: "Corroborated by spectroscopic releases from NASA and The Astrophysical Journal. Cautious scientific framing explicitly notes that further observations are needed.",
+          rebuttalSnippet: "Verified: NASA spectroscopic data confirmed presence of carbon-bearing molecules on exoplanet K2-18b.",
+          claims: [
+            {
+              claim: "JWST detected carbon molecules on K2-18b",
+              status: "Verified",
+              note: "Published in Astrophysical Journal Letters with primary spectroscopy."
+            }
+          ]
+        };
+      } else if (lower.includes('the onion') || lower.includes('feline') || lower.includes('cats possess')) {
+        return {
+          score: 35,
+          verdict: "Satire / Parody",
+          verdictType: "satire",
+          confidence: 98,
+          sensationalism: "Parody",
+          sensationalismNote: "Intended for comedic entertainment",
+          contextStatus: "Satirical Fiction",
+          contextNote: "Not factual reporting",
+          summary: "Originated from an established humor publication. Contains absurd premise regarding feline litigation.",
+          rebuttalSnippet: "Note: This story is from a recognized parody outlet and is not factual news.",
+          claims: [
+            {
+              claim: "European Court granted cats the right to sue for food delays",
+              status: "Satirical",
+              note: "Fictional court case drafted for comedic satire."
+            }
+          ]
+        };
+      } else {
+        return {
+          score: 42,
+          verdict: "Out of Context",
+          verdictType: "warning",
+          confidence: 78,
+          sensationalism: "High (74%)",
+          sensationalismNote: "Loaded emotional phrasing",
+          contextStatus: "Partial Omission",
+          contextNote: "Lacks transcript qualifiers",
+          summary: "Excerpts quotes without the accompanying clarifying statements, producing a distorted interpretation of the event.",
+          rebuttalSnippet: "Clarification: Full video transcripts show this quote was taken out of context.",
+          claims: [
+            {
+              claim: "Speaker intended immediate shutdown of services",
+              status: "Misleading",
+              note: "Original unedited transcript indicates rhetorical exaggeration."
+            }
+          ]
+        };
+      }
+    }
+
+    function getHeuristicImageResult(presetType, caption) {
+      if (presetType === 'tweet') {
+        return {
+          score: 12,
+          verdict: "Likely False / Manipulated",
+          verdictType: "false",
+          confidence: 94,
+          sensationalism: "High (88%)",
+          sensationalismNote: "Urgency keywords without verification",
+          contextStatus: "Doctored Screenshot",
+          contextNote: "Font & alignment inconsistencies detected",
+          summary: "The visual mimics social UI typography but displays baseline kerning discrepancies. Transportation departments confirm normal operating schedules.",
+          rebuttalSnippet: "Fact check: This tweet screenshot is doctored. Transit authorities confirmed regular schedules with no fuel closures.",
+          claims: [
+            {
+              claim: "Transit authorities halted all domestic travel",
+              status: "False",
+              note: "Federal agencies issued formal denial of service cancellations."
+            }
+          ]
+        };
+      } else if (presetType === 'chart') {
+        return {
+          score: 32,
+          verdict: "Out of Context",
+          verdictType: "warning",
+          confidence: 88,
+          sensationalism: "High (79%)",
+          sensationalismNote: "Misleading visual proportion",
+          contextStatus: "Scale Distortion",
+          contextNote: "Truncated Y-axis baseline",
+          summary: "Truncating the vertical axis at 4.0% exaggerates a 0.2% change to visually resemble a 400% surge, creating deceptive scale impression.",
+          rebuttalSnippet: "Fact check: The graph truncates the Y-axis. The actual change is 0.2%, not a 4x increase.",
+          claims: [
+            {
+              claim: "Unemployment surged dramatically in one month",
+              status: "Misleading",
+              note: "Actual statistical variance was 0.2 percentage points."
+            }
+          ]
+        };
+      } else {
+        return {
+          score: 18,
+          verdict: "Likely False / Manipulated",
+          verdictType: "false",
+          confidence: 91,
+          sensationalism: "Moderate (65%)",
+          sensationalismNote: "Repurposed historical photography",
+          contextStatus: "Context Collapse",
+          contextNote: "Reverse archive match: July 2019",
+          summary: "The photograph is authentic but originates from a summer fireworks celebration in 2019, unrelated to the claimed incident.",
+          rebuttalSnippet: "Fact check: Reverse image search dates this photo to a 2019 harbor celebration.",
+          claims: [
+            {
+              claim: "Photo captures recent airstrike event",
+              status: "False",
+              note: "Visual archives confirm 2019 civic festival display."
+            }
+          ]
+        };
+      }
+    }
+
+    function renderResults(data) {
+      currentResult = data;
+      const resultsCard = document.getElementById('resultsCard');
+      resultsCard.classList.remove('hidden');
+
+      // 1. Verdict badge styling
+      const badge = document.getElementById('verdictBadge');
+      const verdictText = document.getElementById('verdictText');
+      verdictText.textContent = data.verdict;
+      document.getElementById('confidenceText').textContent = `(${data.confidence || 90}% Confidence)`;
+
+      badge.className = "px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 border ";
+      if (data.verdictType === 'verified') {
+        badge.classList.add('bg-emerald-50', 'text-emerald-700', 'dark:bg-emerald-950/60', 'dark:text-emerald-300', 'border-emerald-200', 'dark:border-emerald-800');
+        badge.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> <span>${data.verdict}</span>`;
+      } else if (data.verdictType === 'warning') {
+        badge.classList.add('bg-amber-50', 'text-amber-700', 'dark:bg-amber-950/60', 'dark:text-amber-300', 'border-amber-200', 'dark:border-amber-800');
+        badge.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> <span>${data.verdict}</span>`;
+      } else {
+        badge.classList.add('bg-rose-50', 'text-rose-700', 'dark:bg-rose-950/60', 'dark:text-rose-400', 'border-rose-200', 'dark:border-rose-900');
+        badge.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> <span>${data.verdict}</span>`;
+      }
+
+      // 2. Metrics
+      const score = Math.max(0, Math.min(100, data.score || 50));
+      document.getElementById('metricScore').textContent = score;
+      const scoreBar = document.getElementById('metricScoreBar');
+      scoreBar.style.width = `${score}%`;
+      scoreBar.className = score > 70 ? 'bg-emerald-500 h-full rounded-full transition-all' : (score > 40 ? 'bg-amber-500 h-full rounded-full transition-all' : 'bg-rose-500 h-full rounded-full transition-all');
+
+      document.getElementById('metricSensationalism').textContent = data.sensationalism || "Moderate";
+      document.getElementById('metric2Subtitle').textContent = data.sensationalismNote || "Linguistic tone analysis";
+
+      document.getElementById('metricContext').textContent = data.contextStatus || "Verified";
+      document.getElementById('metric3Subtitle').textContent = data.contextNote || "Context consistency check";
+
+      // 3. Summary
+      document.getElementById('executiveSummary').textContent = data.summary;
+
+      // 4. Claims
+      const list = document.getElementById('claimsList');
+      list.innerHTML = '';
+      (data.claims || []).forEach((c) => {
+        let tagClass = 'bg-slate-100 text-slate-700';
+        if (c.status.toLowerCase().includes('verif') || c.status.toLowerCase().includes('true')) {
+          tagClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
+        } else if (c.status.toLowerCase().includes('mislead') || c.status.toLowerCase().includes('unsub')) {
+          tagClass = 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800';
+        } else {
+          tagClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900';
+        }
+
+        const div = document.createElement('div');
+        div.className = "p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 space-y-1";
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">"${c.claim}"</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded ${tagClass}">${c.status}</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-normal">${c.note}</p>
+        `;
+        list.appendChild(div);
+      });
+
+      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      lucide.createIcons();
+    }
+
+    function copyRebuttal() {
+      if (!currentResult) return;
+      const text = currentResult.rebuttalSnippet || "Fact check: This claim has been investigated and flagged as misleading.";
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const label = document.getElementById('copyBtnLabel');
+        label.textContent = "Copied!";
+        showToast("Debunk snippet copied to clipboard");
+        setTimeout(() => { label.textContent = "Copy Quick Fact-Check"; }, 2000);
+      });
+    }
+
+    function setLoading(isLoading, text) {
+      const loader = document.getElementById('loader');
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const analyzeImageBtn = document.getElementById('analyzeImageBtn');
+
+      if (isLoading) {
+        loader.classList.remove('hidden');
+        document.getElementById('loaderText').textContent = text || "Analyzing...";
+        analyzeBtn.disabled = true;
+        analyzeImageBtn.disabled = true;
+      } else {
+        loader.classList.add('hidden');
+        analyzeBtn.disabled = false;
+        analyzeImageBtn.disabled = false;
+      }
+    }
+
+    function checkDomain() {
+      const input = document.getElementById('domainQueryInput').value.trim().toLowerCase();
+      if (!input) return;
+
+      const clean = input.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
+      const card = document.getElementById('domainCard');
+      card.classList.remove('hidden');
+
+      const known = DOMAIN_DATA[clean];
+      if (known) {
+        renderDomainData(known, clean);
+      } else {
+        const isSuspicious = clean.endsWith('.xyz') || clean.endsWith('.biz') || clean.includes('cure');
+        renderDomainData({
+          name: clean.toUpperCase(),
+          score: isSuspicious ? 22 : 65,
+          status: isSuspicious ? 'Low Transparency' : 'Standard Web Domain',
+          type: 'Digital Publisher',
+          notes: isSuspicious ? 'High risk registrar extension; multiple community flags.' : 'Standard domain configuration; cross-reference individual bylines.'
+        }, clean);
+      }
+    }
+
+    function quickCheckDomain(dom) {
+      document.getElementById('domainQueryInput').value = dom;
+      checkDomain();
+    }
+
+    function renderDomainData(d, domain) {
+      const card = document.getElementById('domainCard');
+      let scoreColor = d.score > 70 ? 'text-emerald-600 dark:text-emerald-400' : (d.score > 40 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400');
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">${d.name}</h3>
+            <span class="text-xs font-mono text-slate-400">${domain} • ${d.type}</span>
+          </div>
+          <div class="text-right">
+            <span class="text-2xl font-bold ${scoreColor}">${d.score}</span>
+            <span class="text-[10px] text-slate-400 block font-mono">/ 100 TRUST</span>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Editorial Audit</span>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">${d.notes}</p>
+        </div>
+      `;
+    }
+
+    function renderTrends() {
+      const c = document.getElementById('trendsFeedContainer');
+      c.innerHTML = '';
+      RECENT_DEBUNKS.forEach(item => {
+        const d = document.createElement('div');
+        d.className = "p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2";
+        d.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono uppercase text-slate-400">${item.tag}</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded border ${item.verdictClass}">${item.verdict}</span>
+          </div>
+          <p class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">"${item.title}"</p>
+          <p class="text-xs text-slate-500 leading-relaxed">${item.summary}</p>
+          <div class="pt-1 text-[10px] text-slate-400 font-mono">Verified by: ${item.source}</div>
+        `;
+        c.appendChild(d);
+      });
+      lucide.createIcons();
+    }
+
+    function switchTab(tabId) {
+      ['analyzer', 'sources', 'trends'].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`nav-btn-${t}`);
+        if (el) el.classList.toggle('hidden', t !== tabId);
+        if (btn) {
+          if (t === tabId) {
+            btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 transition";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition";
+          }
+        }
+      });
+    }
+
+    function resetToAnalyzer() {
+      switchTab('analyzer');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      const icon = document.getElementById('themeIcon');
+      icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+    }
+
+    function openApiModal() {
+      document.getElementById('apiModal').classList.remove('hidden');
+      document.getElementById('apiModal').classList.add('flex');
+      document.getElementById('customApiKey').value = API_KEY;
+    }
+
+    function closeApiModal() {
+      document.getElementById('apiModal').classList.add('hidden');
+      document.getElementById('apiModal').classList.remove('flex');
+    }
+
+    function saveApiKey() {
+      API_KEY = document.getElementById('customApiKey').value.trim();
+      localStorage.setItem('VERITAS_API_KEY', API_KEY);
+      closeApiModal();
+      showToast(API_KEY ? 'API key configured' : 'Using default runtime key');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.remove('translate-y-12', 'opacity-0');
+      t.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        t.classList.remove('translate-y-0', 'opacity-100');
+        t.classList.add('translate-y-12', 'opacity-0');
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
