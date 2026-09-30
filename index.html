@@ -416,7 +416,8 @@
     let currentImageBase64 = null;
     let currentImageMime = 'image/png';
     let currentResult = null;
-    let API_KEY = localStorage.getItem('VERITAS_API_KEY') || "";
+    // Gemini API key is kept server-side in Netlify environment variables.
+    const API_ENDPOINT = '/.netlify/functions/gemini';
 
     // Text Test Presets
     const PRESETS = {
@@ -764,7 +765,7 @@
     }
 
     async function fetchGeminiTextAnalysis(text, url) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+      const endpoint = API_ENDPOINT;
       const systemInstruction = `You are Veritas, a professional investigative journalist and fact-checker. Provide objective, concise analysis in JSON format.`;
 
       const prompt = `Analyze this content:
@@ -809,7 +810,7 @@ Return strict JSON only matching:
     }
 
     async function fetchGeminiVisionAnalysis(base64, mime, caption) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+      const endpoint = API_ENDPOINT;
       const systemInstruction = `You are Veritas Multimodal Forensics. Analyze images and captions for deepfakes, screenshot forgery, and out-of-context recycling.`;
 
       const prompt = `Examine this visual and caption: "${caption}".
@@ -1198,7 +1199,7 @@ Return strict JSON matching:
     function openApiModal() {
       document.getElementById('apiModal').classList.remove('hidden');
       document.getElementById('apiModal').classList.add('flex');
-      document.getElementById('customApiKey').value = API_KEY;
+      document.getElementById('customApiKey').value = '';
     }
 
     function closeApiModal() {
@@ -1207,10 +1208,8 @@ Return strict JSON matching:
     }
 
     function saveApiKey() {
-      API_KEY = document.getElementById('customApiKey').value.trim();
-      localStorage.setItem('VERITAS_API_KEY', API_KEY);
       closeApiModal();
-      showToast(API_KEY ? 'API key configured' : 'Using default runtime key');
+      showToast('API key is securely configured on the server');
     }
 
     function showToast(msg) {
